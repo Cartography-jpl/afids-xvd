@@ -1,0 +1,28 @@
+if HAVE_MOTIF
+afidsxvd_PROGRAMS = xvd
+xvd_SOURCES = @srcxvd@/XvdApp.cc
+xvd_SOURCES += @srcxvd@/VicarImageData.cc
+xvd_SOURCES += @srcxvd@/VicarImageFile.cc
+xvd_SOURCES += @srcxvd@/CursorLatLonView.cc
+xvd_SOURCES += @srcxvd@/ImageWindow.cc
+xvd_SOURCES += @srcxvd@/ImageDataWrapper.cc
+xvd_CPPFLAGS = $(AM_CPPFLAGS) -DNO_PDS $(VICAR_RTL_CFLAGS)
+xvd_CPPFLAGS+= $(MOTIF_CFLAGS) $(X_CFLAGS)
+xvd_CPPFLAGS+= -I$(srcdir)/$(srcmotifapp) -I$(srcdir)/$(srcgui)
+xvd_CPPFLAGS+= -I$(srcdir)/$(srcvicarmotif)
+xvd_LDADD = libvicar_motif.la $(VICAR_RTL_LIBS)
+
+# Ignore a number of other warnings, that are just from having old code
+
+if HAVE_GCC
+  xvd_CPPFLAGS += -Wno-unused-variable -Wno-invalid-offsetof -Wno-write-strings -Wno-unused-but-set-variable -Wno-maybe-uninitialized -Wno-strict-aliasing -Wno-unused-variable -fno-strict-aliasing
+endif
+
+# X resources for xvd
+xresource_DATA += @srcxvd@/XVd.xres
+afidsxvd_DATA = @srcxvd@/xvd.pdf
+EXTRA_DIST+= @srcxvd@/XVd.xres @srcxvd@/xvd.pdf
+EXTRA_DIST+= @srcxvd@/mp_routines.h
+EXTRA_DIST+= @srcxvd@/VicarImageData.h
+EXTRA_DIST+= @srcxvd@/VicarImageFile.h
+endif

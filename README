@@ -1,0 +1,8 @@
+This is the AFIDS version of xvd. This is considerably more complicated to
+build than other AFIDS code, and it also depends on the presence of the motif
+librarys. So we have separated this out as it own build.
+
+Note that xvd is the only program that depends on the VICAR GUI and MotifApp
+libraries. So we build those libraries here, rather than as part of 
+vicar-rtl. If this every becomes an issue, we can shift this around. But
+given how old this code is, that seems unlikely.

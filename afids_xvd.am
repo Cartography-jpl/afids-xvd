@@ -1,0 +1,9 @@
+if BUILD_AFIDS_XVD
+include afids_xvd/gui/gui.am
+include afids_xvd/motif_app/motif_app.am
+include afids_xvd/vicar_motif/vicar_motif.am
+include afids_xvd/axvd/axvd.am
+bin_SCRIPTS+= afids_xvd/script/xvd
+etcafidsxvd_DATA = afids_xvd/script/setup_afids_xvd.sh
+etcafidsxvd_DATA+= afids_xvd/script/setup_afids_xvd.csh
+endif

@@ -1,0 +1,238 @@
+************ XVD with GeoTIFF navigation Build Instructions **************
+
+get/unpack/vimake /opt/vicar/vicar290/gui/prog/xvd.com
+get/unpack/vimake /opt/vicar/vicar290/gui/sub/gui/imagemodel.com
+get/unpack/vimake /opt/vicar/vicar290/gui/latlon.com
+get /opt/vicar/vicar290/p1/inc/mp_routines.h
+
+Change line 81 of xvd.make from
+	$(LINK.ccc) -o xvd $(OBJS) $(LIBS)
+to	
+	$(LINK.ccc) -o xvd $(OBJS) VicarImageData.o VicarImageFile.o CursorLatLonView.o $(LIBS)
+
+VicarImageData.cc VicarImageData.h
+VicarImageFile.cc VicarImageFile.h
+CursorLatLonView.cc
+
+make imagemodel.make
+make latlon.make
+make xvd
+
+Add the following to .cshrc
+setenv XFILESEARCHPATH /home/wlb/xvddev/XVd.xres:${XFILESEARCHPATH}
+with /home/wlb/xvddev replaced with the actual location of the XVd.xres file unpacked from this com file.
+
+************************ Notes ***********************************************
+
+From XVd.xres:
+*LatLonBar.labelString: Map Coordinate Display
+
+
+
+Adding
+   static Widget firstChildToUnmanage;
+   static Widget secondChildToUnmanage;
+to VicarImageData.h and
+    VicarImageData::firstChildToUnmanage = _lonDirectionLabel;
+    VicarImageData::secondChildToUnmanage = _latLonTypeWidget;
+to CursorLatLonView.cc is a hack to turn off the "lon direction label"
+and "lat lon type menu" in the CursorLatLonView. Doing this the "right
+way" would require adding fields and accessors to several classes in
+the type hierarchy.
+
+
+Inserted VicarImageFile.c:732
+static int gtgetlab(char * inp, int instance, char * filename, char ** labelstr, int * nl, int * ns)
+char * VicarImageFile::readGeoTiffLabelFromFile()
+
+Inserted VicarImageFile.h:140
+   char * read readGeoTiffLabelFromFile();
+Adds public method to class VicarImageFile
+
+Inserted VicarImageData.h:55
+ private:
+   char * _geoTiffLabel = 0;
+Adds field to class VicarImageData, following _mpObject declaration.
+
+Inserted VicarImageData.cc:42
+   _geoTiffLabel = NULL;
+Adds initialization to VicarImageData::VicarImageData().
+
+Added to VicarImageData.cc:701
+int geofix(char * labelstr, double * map, double * invmap, int nl, int ns, double * corner)
+
+Enhanced readMapProjInfo() near VicarImageData.cc:681
+int VicarImageData::readMapProjInfo() 
+{ 
+  if (_files[0] != NULL) {
+    /* try to read a MAP label */
+    _mpObject = _files[0]->readMPInfoFromFile();
+
+    /* if no luck, try for a geoTiff label */
+    if (_mpObject == NULL) {
+      _geoTiffLabel = "geoTiff";
+      printf ("pretending we have a geoTiff label\n");
+    }
+  }
+
+  if (_mpObject != NULL || _geoTiffLabel != NULL) {
+    _mapProjInfoPresent = 1;
+    updateViews();
+
+    return 1;
+  }
+  else
+    return 0;
+}
+
+
+imagemodel.com::VicarImageData.cc:685
+VicarImageData::readMapProjInfo calls
+VicarImageFile::readMPInfoFromFile() which returns an MP object if it
+finds a usable "MAP" property label, otherwise null. If
+readMPInfoFromFile returns non-null, readMapProjInfo sets
+_mapProjInfoPresent to 1, enabling lat/lon support. Could add support
+here to look for GeoTIFF label when readMPInfoFromFile returns
+null. Would need to add geotiff label string to VicarImageData
+definition for use later. Should probably add _geotiffInfoPresent.
+Then wherever a check is made for _mapProjInfoPresent, an enhancement
+could be made checking for _geotiffInfoPresent.
+
+imagemodel.com::VicarImageData.cc:696
+VicarImageData::lineSampToLatLon() calls mpxy2ll to calculate lat/lon
+based on MAP label. This looks like the place to intercept the lat/lon
+calculation for GeoTIFF.
+
+************************ /opt/vicar/vicar290/gui/ ***********************************
+
+latlon.com::CursorLatLonView.cc:78
+CursorLatLonView::cursorMoved(int x, int y)
+Definition of method updating lat/lon text fields.
+
+imagemodel.com::VicarImageData.cc:696
+VicarImageData::lineSampToLatLon(double line, double samp, double *lat, double *lon, int type)
+Definition of method calculating lat/lon from line/samp. Calls
+mpxy2ll.
+
+mp_routines::mpxy2ll.c:68
+int mpxy2ll( MP mp, double line, double sample, double *latitude, double *longitude, int ll_type )
+
+
+ImageToImageWindowGlue.cc:35 (latlon.com)
+  if( _window->getImageData()->isMapProjInfoPresent() )
+    _window->enableLatLonIFs(True); 
+  else {
+    _window->enableLatLonIFs(False);
+This enables/disables Tools->Lat/Lon Display button.
+
+
+ImageDataWrapper.cc:495 (imagemodel.com)
+int ImageDataWrapper::isMapProjInfoPresent()
+Method definition.
+
+
+ImageData.cc:35 (imagemodel.com)
+ImageData::ImageData()
+initializes _mapProjInfoPresent = 0;
+
+
+VicarImageData.h:53
+   MP _mpObject;
+Definition of MP field in class VicarImageData.
+
+
+VicarImageData.cc:685 (imagemodel.com)
+int VicarImageData::readMapProjInfo() 
+{ 
+  if (_files[0] != NULL)
+      _mpObject = _files[0]->readMPInfoFromFile();
+
+  if (_mpObject != NULL) {
+    _mapProjInfoPresent = 1;
+
+VicarImageFile.cc:731 (imagemodel.com)
+MP VicarImageFile::readMPInfoFromFile() 
+
+Method definition. Calls mplabelRead. If it finds a "MAP" property, it
+returns an MP object.
+
+
+
+*************************** /opt/vicar/vicar290/p1/sub ****************************
+
+
+mpinit.c:46 (mp_routines.com)
+int mpInit( MP *mp_obj )
+Method definition.
+
+mplabelread.c:34 (mp_labels.com)
+int mpLabelRead(
+Method definition.
+
+mp_routines.h:
+#define mpPROPERTY_NAME         "MAP"   /* Name of MP Property group:   */
+
+
+********* DIFFS *********
+CursorLatLonView.cc (/opt/vicar/vicar290/gui/sub/gui/latlon.com)
+ImageWindow.cc      (/opt/vicar/vicar290/gui/sub/gui/xvdmisc.com)
+VicarImageData.cc   (/opt/vicar/vicar290/gui/sub/gui/imagemodel.com)
+VicarImageFile.cc   (/opt/vicar/vicar290/gui/sub/gui/imagemodel.com)
+XvdApp.cc           (/opt/vicar/vicar290/gui/prog/xvd.com)
+
+VicarImageData.h (/opt/vicar/vicar290/gui/inc/gui/)
+/opt/vicar/vicar290/gui/inc/gui/imagemodel_h.com
+/opt/vicar/vicar290/gui/sub/gui/imagemodel.com
+/opt/vicar/vicar290/p2/inc/dspglldata_h.com
+/opt/vicar/vicar290/p2/sub/dspgllinstrument.com
+/opt/vicar/vicar290/p2/sub/tp_misc.com
+
+*** /opt/vicar/vicar290/gui/inc/gui/VicarImageData.h    Mon Dec  9 10:42:49 2002
+--- ./VicarImageData.h  Wed Jul 28 14:16:47 2004
+*************** class VicarImageData : public ImageData
+*** 52,59 ****
+--- 52,65 ----
+  
+     MP _mpObject;
+  
++  private:
++    char * _geoTiffLabel;
+   public:
++    static Widget firstChildToUnmanage;
++    static Widget secondChildToUnmanage;
+  
++  public:
++ 
+     VicarImageData();
+     virtual ~VicarImageData();
+
+VicarImageFile.h (/opt/vicar/vicar290/gui/inc/gui/)
+/opt/vicar/vicar290/gui/inc/gui/imagemodel_h.com
+/opt/vicar/vicar290/gui/sub/gui/imagemodel.com
+/opt/vicar/vicar290/p2/inc/dspglldata_h.com
+
+*** /opt/vicar/vicar290/gui/inc/gui/VicarImageFile.h    Mon Dec  9 10:42:49 2002
+--- ./VicarImageFile.h  Wed Jul 28 14:16:47 2004
+*************** class VicarImageFile
+*** 137,142 ****
+--- 137,143 ----
+     virtual StatusType readHeader(int band, unsigned char *buf);
+     
+     virtual MP readMPInfoFromFile();
++    char * readGeoTiffLabelFromFile();
+  
+     // Label reading and display
+     StatusType readVicarLabel(char*& labels, VicarLabelType type, 
+
+
+mp_routines.h is needed to compile above cc, but not changed
+ImageDataWrapper.cc references one of the two headers above, so is compiled, though it wasn't changed
+
+These files reference the two headers above, but are not included in the build (perhaps dangerously):
+
+DspInstrSsi.cc
+DspDataPwsGll.h, refenced by
+/opt/vicar/vicar290/p2/inc/dspglldata_h.com
+/opt/vicar/vicar290/p2/inc/dspgllinstrument_h.com
+/opt/vicar/vicar290/p2/sub/dspglldata.com
+

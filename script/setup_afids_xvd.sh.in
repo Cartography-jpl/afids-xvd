@@ -1,0 +1,11 @@
+if [ -z "$AFIDSXVDTOP" ] ; then
+    export AFIDSXVDTOP=@prefix@
+fi
+export V2DATA=${AFIDSXVDTOP}/vicar/data
+export AFIDS_XRESOURCES=${AFIDSXVDTOP}/share/afids/xresource
+if [ -z "$XFILESEARCHPATH" ] ; then
+    export XFILESEARCHPATH=${AFIDS_XRESOURCES}/%N%S.xres
+else
+    export XFILESEARCHPATH=${XFILESEARCHPATH}:${AFIDS_XRESOURCES}/%N%S.xres
+fi
+

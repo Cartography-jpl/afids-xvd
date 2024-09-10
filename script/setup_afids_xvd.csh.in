@@ -1,0 +1,10 @@
+if(! $?AFIDSXVDTOP) then
+    setenv AFIDSXVDTOP @prefix@
+endif
+setenv V2DATA ${AFIDSXVDTOP}/vicar/data
+setenv AFIDS_XRESOURCES ${AFIDSXVDTOP}/share/afids/xresource
+if(! $?XFILESEARCHPATH) then
+   setenv XFILESEARCHPATH ${AFIDS_XRESOURCES}/%N%S.xres
+else
+   setenv XFILESEARCHPATH ${XFILESEARCHPATH}:${AFIDS_XRESOURCES}/%N%S.xres
+endif
