@@ -1,4 +1,4 @@
-AC_INIT(afids-xvd, 1.05)
+AC_INIT(afids-xvd, 1.06)
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([config/m4])
 AC_CONFIG_FILES([afids_xvd/script/xvd])

@@ -65,12 +65,10 @@ CPPFLAGS="$X_CFLAGS $CPPFLAGS"
 LDFLAGS="$X_LIBS $LDFLAGS"
 #
 ac_cv_motif_includes="none"
-AC_TRY_COMPILE([#include <Xm/Xm.h>],[int a;],
-[
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <Xm/Xm.h>]], [[int a;]])],[
 # Xm/Xm.h is in the standard search path.
 ac_cv_motif_includes=
-],
-[
+],[
 # Xm/Xm.h is not in the standard search path.
 # Locate it and put its directory in `motif_includes'
 #
@@ -119,12 +117,10 @@ CPPFLAGS="$X_CFLAGS $CPPFLAGS"
 LDFLAGS="$X_LIBS $LDFLAGS"
 #
 ac_cv_motif_libraries="none"
-AC_TRY_LINK([#include <Xm/Xm.h>],[XtToolkitInitialize();],
-[
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <Xm/Xm.h>]], [[XtToolkitInitialize();]])],[
 # libXm.a is in the standard search path.
 ac_cv_motif_libraries=
-],
-[
+],[
 # libXm.a is not in the standard search path.
 # Locate it and put its directory in `motif_libraries'
 #
@@ -230,10 +226,10 @@ lt_save_LIBS="$LIBS"
 LIBS="$X_LIBS -lXp -lXext -lXt $X_PRE_LIBS -lX11 $X_EXTRA_LIBS $LIBS"
 CFLAGS="$X_CFLAGS $CFLAGS"
 CPPFLAGS="$X_CFLAGS $CPPFLAGS"
-AC_TRY_LINK([
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <X11/Intrinsic.h>
 #include <X11/extensions/Print.h>
-],[
+]], [[
 int main() {
 Display *display=NULL;
 short   major_version, minor_version;
@@ -241,9 +237,7 @@ Status rc;
 rc=XpQueryVersion(display, &major_version, &minor_version);
 exit(0);
 }
-],
-lt_cv_libxp=yes,
-lt_cv_libxp=no)
+]])],[lt_cv_libxp=yes],[lt_cv_libxp=no])
 ])
 if test "$lt_cv_libxp" = "yes"; then
   AC_DEFINE(HAVE_LIB_XP, [], [If we have lib xp])
