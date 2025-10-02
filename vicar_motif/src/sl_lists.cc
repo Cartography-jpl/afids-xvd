@@ -21,8 +21,8 @@ SL_List<T>::SL_List()
 	   and app deletes partially-initialized object */
 
     items = NULL;
-    scan_pts = NULL;
-    watches = NULL;
+    scan_pts = 0;
+    watches = 0;
     current_items = 0;
 
 	/* create our working storage... */
